@@ -15,5 +15,5 @@ result := {
 	lib.job_disabled
 } else := {
 	"status": "MANUAL",
-	"details": "Whether Jenkinsfile changes are reviewed is branch protection on the source repository, which this controller cannot see. Confirm the branch each pipeline reads its definition from requires review — an SCM bench in this family automates that half.",
+	"details": "Whether Jenkinsfile changes are reviewed is branch protection on the source repository, which this controller cannot see. Confirm the branch each pipeline reads its definition from requires review.",
 }
