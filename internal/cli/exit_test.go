@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scm-bench/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/console"
 )
 
 func TestExitCodeDistinguishesFindingsFromFailure(t *testing.T) {

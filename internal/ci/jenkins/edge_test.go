@@ -13,7 +13,7 @@ import (
 	"testing/iotest"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
 )
 
 // cancelling serves s, except that a request for one path cancels the scan's

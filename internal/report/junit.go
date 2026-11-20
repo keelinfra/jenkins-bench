@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // JUnit XML, for the CI systems that draw test results natively — Jenkins'

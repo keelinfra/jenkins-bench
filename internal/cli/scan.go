@@ -12,13 +12,13 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scm-bench/jenkins-bench/examples"
-	"github.com/scm-bench/jenkins-bench/internal/ci"
-	"github.com/scm-bench/jenkins-bench/internal/ci/jenkins"
-	"github.com/scm-bench/jenkins-bench/internal/config"
-	"github.com/scm-bench/jenkins-bench/internal/console"
-	"github.com/scm-bench/jenkins-bench/internal/engine"
-	"github.com/scm-bench/jenkins-bench/internal/report"
+	"github.com/keelinfra/jenkins-bench/examples"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci/jenkins"
+	"github.com/keelinfra/jenkins-bench/internal/config"
+	"github.com/keelinfra/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/report"
 )
 
 type scanOptions struct {

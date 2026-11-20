@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
 )
 
 func TestFindScriptsByShape(t *testing.T) {

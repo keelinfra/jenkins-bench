@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
 )
 
 // loadChecks is checks.Load; a variable so a test can stand in a bundle that

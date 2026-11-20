@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
-	"github.com/scm-bench/jenkins-bench/internal/config"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/config"
 )
 
 var exceptionNow = time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)

@@ -23,7 +23,7 @@
 自己试一下，不需要控制器，也不需要 token —— `--demo` 会评估二进制里自带的示例：
 
 ```bash
-docker run --rm -t ghcr.io/scm-bench/jenkins-bench:latest scan --demo
+docker run --rm -t ghcr.io/keelinfra/jenkins-bench:latest scan --demo
 ```
 
 <sub>动画由 [`hack/demo.tape`](hack/demo.tape) 用 [vhs](https://github.com/charmbracelet/vhs) 录制。</sub>
@@ -85,10 +85,10 @@ bug 报告里。
 ## 安装
 
 ```sh
-go install github.com/scm-bench/jenkins-bench/cmd/jenkins-bench@latest
+go install github.com/keelinfra/jenkins-bench/cmd/jenkins-bench@latest
 ```
 
-或从 [Releases](https://github.com/scm-bench/jenkins-bench/releases)
+或从 [Releases](https://github.com/keelinfra/jenkins-bench/releases)
 下载归档，或使用容器镜像。
 
 ## 快速上手

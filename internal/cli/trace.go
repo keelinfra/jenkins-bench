@@ -10,8 +10,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci/jenkins"
-	"github.com/scm-bench/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/ci/jenkins"
+	"github.com/keelinfra/jenkins-bench/internal/console"
 )
 
 // tracer shows what the scan is doing, and accounts for it afterwards.

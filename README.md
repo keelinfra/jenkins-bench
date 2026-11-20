@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/scm-bench/jenkins-bench/actions/workflows/ci.yml"><img src="https://github.com/scm-bench/jenkins-bench/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/scm-bench/jenkins-bench/releases"><img src="https://img.shields.io/github/v/release/scm-bench/jenkins-bench?include_prereleases&sort=semver" alt="Release"></a>
+  <a href="https://github.com/keelinfra/jenkins-bench/actions/workflows/ci.yml"><img src="https://github.com/keelinfra/jenkins-bench/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/keelinfra/jenkins-bench/releases"><img src="https://img.shields.io/github/v/release/keelinfra/jenkins-bench?include_prereleases&sort=semver" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0"></a>
 </p>
 
@@ -40,7 +40,7 @@ jenkins-bench scan --url https://jenkins.example.com --username audit --token <a
 Try it yourself, with no controller and no token — `--demo` evaluates a sample built into the binary:
 
 ```bash
-docker run --rm -t ghcr.io/scm-bench/jenkins-bench:latest scan --demo
+docker run --rm -t ghcr.io/keelinfra/jenkins-bench:latest scan --demo
 ```
 
 <sub>The recording is made by [`hack/demo.tape`](hack/demo.tape) with [vhs](https://github.com/charmbracelet/vhs).</sub>
@@ -102,15 +102,15 @@ to a bug report.
 ## Install
 
 ```sh
-go install github.com/scm-bench/jenkins-bench/cmd/jenkins-bench@latest
+go install github.com/keelinfra/jenkins-bench/cmd/jenkins-bench@latest
 ```
 
 Or download an archive from
-[Releases](https://github.com/scm-bench/jenkins-bench/releases), or use the
+[Releases](https://github.com/keelinfra/jenkins-bench/releases), or use the
 container image:
 
 ```sh
-docker run --rm ghcr.io/scm-bench/jenkins-bench:latest \
+docker run --rm ghcr.io/keelinfra/jenkins-bench:latest \
   scan --url https://jenkins.example.com --username audit --token $TOKEN
 ```
 

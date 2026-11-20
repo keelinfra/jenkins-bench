@@ -11,8 +11,8 @@
 # trade: a hand-written narrative plus whatever pull requests landed, rather
 # than a machine-assembled list of every commit.
 #
-# Every label named below exists in .github/labels.json, which the Labels
-# workflow syncs. That is not a formality — a category whose labels do not
+# Every label named below exists in the repository's label list; create a new
+# one there before naming it here. That is not a formality — a category whose labels do not
 # exist can never fill, and it fails silently. This file previously named
 # thirteen labels that did not exist, including four of the six in Bug fixes.
 #
@@ -28,8 +28,7 @@ changelog:
   exclude:
     labels:
       - no-changelog
-      # GitHub creates these with every repository; they are not in
-      # labels.json because nothing has to put them there.
+      # GitHub creates these with every repository.
       - invalid
       - duplicate
       - question

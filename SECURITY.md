@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Report privately through
-[GitHub Security Advisories](https://github.com/scm-bench/jenkins-bench/security/advisories/new).
+[GitHub Security Advisories](https://github.com/keelinfra/jenkins-bench/security/advisories/new).
 That keeps the report confidential until a fix is available and gives us a
 private space to work with you on it.
 

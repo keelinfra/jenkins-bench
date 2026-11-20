@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 func finding(id, resource, resourceType string, status engine.Status, severity string) engine.Finding {
@@ -644,7 +644,7 @@ func sarifOf(t *testing.T, rep *engine.Report) sarifDoc {
 }
 
 // GitHub code scanning drops a result without a physicalLocation: the upload
-// succeeds and the Security tab stays empty (scm-bench/jenkins-bench#10).
+// succeeds and the Security tab stays empty (keelinfra/jenkins-bench#10).
 // Every result carries one now, a relative path naming the platform, the
 // controller and the resource, with the region GitHub requires.
 func TestSARIFResultsCarryAPhysicalLocation(t *testing.T) {

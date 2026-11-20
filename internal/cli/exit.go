@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scm-bench/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/console"
 )
 
 // Run executes the command tree and returns the process's exit code. When it

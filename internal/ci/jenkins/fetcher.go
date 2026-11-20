@@ -16,7 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
 )
 
 // deniedNotBroken reports whether err is the controller answering "you may not

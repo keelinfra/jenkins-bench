@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/scm-bench/jenkins-bench/internal/cli"
+	"github.com/keelinfra/jenkins-bench/internal/cli"
 )
 
 // exit is os.Exit; a variable so the wiring below can be tested in-process.

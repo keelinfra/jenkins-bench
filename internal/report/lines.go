@@ -6,9 +6,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
-	"github.com/scm-bench/jenkins-bench/internal/console"
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // The default report body: one finding per record, the shape linters use.

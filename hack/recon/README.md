@@ -70,12 +70,10 @@ docker rm -f jenkins-bench-recon
 ## protofetch.py
 
 A throwaway prototype of the fetcher, written before any Go existed to answer
-one question: can [`jenkins-snapshot.schema.json`](https://github.com/scm-bench/scm-bench/blob/main/schemas/jenkins-snapshot.schema.json)
-hold what the API actually returns?
+one question: can the snapshot shape hold what the API actually returns?
 
 ```sh
-python3 -m venv .venv && .venv/bin/pip install jsonschema
-.venv/bin/python protofetch.py http://localhost:18080 admin:adminpw snapshot.json
+python3 protofetch.py http://localhost:18080 admin:adminpw snapshot.json
 ```
 
 It obeys the same rules the real fetcher must — GET only, and no secret leaves

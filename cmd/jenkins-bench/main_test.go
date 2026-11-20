@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/scm-bench/jenkins-bench/internal/cli"
+	"github.com/keelinfra/jenkins-bench/internal/cli"
 )
 
 // main wires the command tree to the process: its arguments in, its exit code

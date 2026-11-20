@@ -11,7 +11,7 @@ against a stand-in server.
 ## Getting set up
 
 ```
-git clone https://github.com/scm-bench/jenkins-bench.git
+git clone https://github.com/keelinfra/jenkins-bench.git
 cd jenkins-bench
 make check      # gofmt, vet, race-enabled tests, and the policy suite
 ```
@@ -131,10 +131,8 @@ Both must name a concrete place — a settings path, a file to add, or an explic
 statement that nothing applies. Vague remediation is worse than none: it wastes
 the reader's time before they discover it does not help.
 
-The full format is specified in
-[the bench contract](https://github.com/scm-bench/scm-bench/blob/main/docs/bench-contract.md),
-with a JSON Schema at
-[`schemas/metadata.schema.json`](https://github.com/scm-bench/scm-bench/blob/main/schemas/metadata.schema.json).
+The full format is the JSON Schema in
+[`docs/metadata.schema.json`](docs/metadata.schema.json).
 
 Then add the control to the coverage table in the README.
 
@@ -169,7 +167,7 @@ tag to create. The workflow does the rest.
 git tag -a v0.1.0 -m "jenkins-bench v0.1.0" && git push origin v0.1.0
 ```
 
-Four things that have each gone wrong once in this family:
+Four things that have each gone wrong once here:
 
 - **All three components, and the `v`** — `v0.1.0`, never `v0.1`. Go accepts
   `v0.1` as a semver string but not a canonical one, so the module system
@@ -181,9 +179,9 @@ Four things that have each gone wrong once in this family:
   newest *release* version, so a prerelease reaches only those who ask for it by
   name, and you can iterate without spending `v0.1.0`.
 - **The GHCR package is created private.** The first release publishes
-  `ghcr.io/scm-bench/<bench>` as a private package, so the `docker run` line in
-  the README fails with `unauthorized` for everyone. Flip it once under the
-  organization's Packages → the package → Package settings → Change visibility.
+  `ghcr.io/keelinfra/jenkins-bench` as a private package, so the `docker run`
+  line in the README fails with `unauthorized` for everyone. Flip it once under
+  the organization's Packages → the package → Package settings → Change visibility.
   Nothing in the workflow can do it.
 
 Signing needs nothing from you — cosign works keylessly from the workflow's OIDC

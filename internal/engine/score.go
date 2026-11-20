@@ -3,7 +3,7 @@ package engine
 import (
 	"strings"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
 )
 
 // Score summarises a report as a single 0-100 number plus the counts behind it.

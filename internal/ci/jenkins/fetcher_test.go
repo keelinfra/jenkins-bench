@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
 )
 
 // stand is a controller stand-in. It records every request, and fails the test

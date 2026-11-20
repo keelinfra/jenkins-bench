@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // failAfter is a writer that accepts n bytes and then refuses, the way a full
