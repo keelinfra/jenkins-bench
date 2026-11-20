@@ -9,7 +9,7 @@ private space to work with you on it.
 
 Please do not open a public issue for a security problem.
 
-If you cannot use GitHub advisories, email **xianpeng.shen@gmail.com** with
+If you cannot use GitHub advisories, email **hello@keelinfra.io** with
 `jenkins-bench security` in the subject.
 
 **What to expect**

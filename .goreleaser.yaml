@@ -34,6 +34,7 @@ archives:
     files:
       - LICENSE
       - README.md
+      - docs/guide.md
       # "examples/*", not "examples/**/*": the ** form requires at least one
       # subdirectory, so it silently matched nothing and shipped archives
       # without the sample config and snapshot the README tells people to run.

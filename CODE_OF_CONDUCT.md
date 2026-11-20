@@ -60,7 +60,7 @@ representative at an online or offline event.
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at
-**xianpeng.shen@gmail.com**.
+**hello@keelinfra.io**.
 
 All complaints will be reviewed and investigated promptly and fairly.
 
