@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/keelinfra/jenkins-bench/internal/console"
 	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
@@ -166,7 +167,7 @@ func TestHeaderAndSummaryGiveWayOnANarrowTerminal(t *testing.T) {
 	var buf bytes.Buffer
 	writeSummary(&buf, rep, painter{}, 30)
 	lines := strings.Split(buf.String(), "\n")
-	if len(lines) < 3 || !strings.HasPrefix(lines[1], "SCORE") || !strings.Contains(lines[2], "passed") {
+	if len(lines) < 5 || !strings.HasPrefix(lines[2], margin+"SCORE") || !strings.Contains(lines[3], "passed") {
 		t.Errorf("a narrow summary should put the counts on their own line:\n%s", buf.String())
 	}
 }
@@ -186,7 +187,9 @@ func TestTableWidthDefaultsToTheEnvironment(t *testing.T) {
 }
 
 // Colour paints the words and never the layout: with it on, every word that
-// was there without it is still there.
+// was there without it is still there. The one thing colour adds is the
+// padding inside the brand badge on the first line, which is part of the
+// badge's ground and has no meaning without it.
 func TestColourDoesNotChangeTheWords(t *testing.T) {
 	rep := sample()
 	rep.Errors = []string{"CIS-2.3.1 on legacy-build: policy evaluation failed"}
@@ -202,7 +205,8 @@ func TestColourDoesNotChangeTheWords(t *testing.T) {
 		if !strings.Contains(coloured.String(), "\x1b[") {
 			t.Fatalf("details=%v: Color produced no escapes", details)
 		}
-		if got := stripANSI(coloured.String()); got != plain.String() {
+		got := strings.Replace(stripANSI(coloured.String()), " jenkins-bench  ", "jenkins-bench ", 1)
+		if got != plain.String() {
 			t.Errorf("details=%v: colour changed the text\n--- plain\n%s\n--- coloured, stripped\n%s", details, plain.String(), got)
 		}
 		if !strings.Contains(plain.String(), "Policy errors") || !strings.Contains(plain.String(), rep.Errors[0]) {
@@ -232,8 +236,8 @@ func TestDimParensSkipsEmptySegments(t *testing.T) {
 	}
 }
 
-// A long resource name leaves the reason no room beside it, so the reason
-// starts on its own line; long evidence wraps under its bullet.
+// A long resource name does not fit beside the control, so it takes a line of
+// its own at the body indent; long evidence wraps under its own first word.
 func TestFindingLinesWrapOnANarrowTerminal(t *testing.T) {
 	rep := sample()
 	f := &rep.Findings[2] // FAIL on legacy-build
@@ -244,10 +248,10 @@ func TestFindingLinesWrapOnANarrowTerminal(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, f.Resource+"  CIS-2.3.1 HIGH:\n"+contIndent+"one sentence") {
-		t.Errorf("the reason should start on its own line under a long head:\n%s", out)
+	if !strings.Contains(out, "  HIGH    CIS-2.3.1\n"+bodyIndent+f.Resource+"\n"+bodyIndent+"one sentence") {
+		t.Errorf("a long resource should move to its own line:\n%s", out)
 	}
-	if !strings.Contains(out, contIndent+"· one piece") || !strings.Contains(out, contIndent+"  ") {
+	if !strings.Contains(out, bodyIndent+"·    one piece") || !strings.Contains(out, "\n"+bodyIndent+"     ") {
 		t.Errorf("long evidence should wrap under its bullet:\n%s", out)
 	}
 }
@@ -289,5 +293,53 @@ func TestRulesIndexSuggestsAFolderLevelFix(t *testing.T) {
 		if !strings.Contains(buf.String(), "failing on all 3 jobs") {
 			t.Errorf("withRef=%v: no folder-level hint:\n%s", withRef, buf.String())
 		}
+	}
+}
+
+// A heading gives up its count, then its rule, before it gives up its title.
+func TestHeadingSheds(t *testing.T) {
+	for _, tc := range []struct {
+		width int
+		want  string
+	}{
+		{40, "Failed " + strings.Repeat("─", 21) + " 2 findings"},
+		{15, "Failed " + strings.Repeat("─", 7)},
+		{8, "Failed"},
+	} {
+		var buf bytes.Buffer
+		heading(&buf, painter{}, tc.width, "", "Failed", "2 findings")
+		if got := strings.TrimSpace(buf.String()); got != tc.want {
+			t.Errorf("width %d: heading = %q, want %q", tc.width, got, tc.want)
+		}
+	}
+}
+
+// The score bar is drawn only where it has room to mean something, and the
+// counts move to wrapped lines of their own before they run off the edge.
+func TestSummaryOnAVeryNarrowPage(t *testing.T) {
+	var buf bytes.Buffer
+	writeSummary(&buf, sample(), painter{}, 20)
+	out := buf.String()
+	if strings.Contains(out, barFull) || strings.Contains(out, barEmpty) {
+		t.Errorf("a 20-column summary should drop the bar:\n%s", out)
+	}
+	if !strings.Contains(out, "SCORE 33/100\n") {
+		t.Errorf("the score should stand alone:\n%s", out)
+	}
+}
+
+// The brand badge uses the exact brand colours where the terminal says it can
+// draw them, and the 256-colour cube everywhere else.
+func TestBrandFollowsColorterm(t *testing.T) {
+	t.Setenv("COLORTERM", "truecolor")
+	if got := console.Brand(); !strings.Contains(got, "38;2;11;34;57") {
+		t.Errorf("truecolor brand = %q", got)
+	}
+	t.Setenv("COLORTERM", "")
+	if got := console.Brand(); !strings.Contains(got, "38;5;") {
+		t.Errorf("256-colour brand = %q", got)
+	}
+	if got := brand(painter{enabled: true}); !strings.HasPrefix(got, console.Brand()) || brandWidth(painter{enabled: true}) != len(" jenkins-bench ") {
+		t.Errorf("coloured brand = %q", got)
 	}
 }

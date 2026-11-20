@@ -3,8 +3,11 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/keelinfra/jenkins-bench/internal/checks"
 )
 
 // run executes the command tree with the given arguments, capturing stdout.
@@ -103,5 +106,34 @@ func TestRootCommandRegistersItsSubcommands(t *testing.T) {
 		if !found {
 			t.Errorf("root command does not register %q", name)
 		}
+	}
+}
+
+// With colour on, list-checks paints the IDs and severities the way the scan
+// report does, and every word is still the word it was without colour.
+func TestListChecksColour(t *testing.T) {
+	bundle, err := loadChecks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plain, coloured bytes.Buffer
+	if err := writeCheckList(&plain, bundle.Checks, false); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeCheckList(&coloured, bundle.Checks, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"\x1b[31mHIGH", "\x1b[33mMEDIUM", "\x1b[36mCIS-2.1.6", "\x1b[2mno (manual)"} {
+		if !strings.Contains(coloured.String(), want) {
+			t.Errorf("coloured list is missing %q", want)
+		}
+	}
+	if got := regexp.MustCompile("\x1b\\[[0-9;]*m").ReplaceAllString(coloured.String(), ""); got != plain.String() {
+		t.Errorf("colour changed the text:\n%s\n---\n%s", plain.String(), got)
+	}
+	low := []checks.Check{{Metadata: checks.Metadata{ID: "X-1", Severity: "LOW", Scope: "job", Automated: true, Title: "t"}}}
+	var buf bytes.Buffer
+	if err := writeCheckList(&buf, low, true); err != nil || !strings.Contains(buf.String(), "\x1b[2mLOW") {
+		t.Errorf("a LOW severity should be dim: %q, %v", buf.String(), err)
 	}
 }

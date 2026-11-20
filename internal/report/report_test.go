@@ -106,9 +106,9 @@ func TestTableShowsTheScoreArithmetic(t *testing.T) {
 
 func TestTableNamesTheControllerResource(t *testing.T) {
 	out := render(t, FormatTable, Options{})
-	// The failing record leads with the resource, and the instance is named
-	// by the word the engine uses everywhere else.
-	if !strings.Contains(out, engine.InstanceResourceName+"  CIS-2.1.6") {
+	// The failing record names the resource beside the control, and the
+	// instance is named by the word the engine uses everywhere else.
+	if !strings.Contains(out, "CIS-2.1.6  "+engine.InstanceResourceName) {
 		t.Errorf("the controller's failure should lead with its name:\n%s", out)
 	}
 }
@@ -360,12 +360,12 @@ func TestToolVersionIsStampedIntoSARIF(t *testing.T) {
 
 // --- the line-oriented default layout ---------------------------------------
 
-// One record answers the whole question: which resource, which control, how
-// bad, and why — the reason a reader previously had to flip to --details for.
+// One record answers the whole question: how bad, which control, which
+// resource — on one grep-able line — and why, directly under it.
 func TestFailLineCarriesResourceControlSeverityAndDetails(t *testing.T) {
 	out := render(t, FormatTable, Options{})
-	if !strings.Contains(out, "legacy-build  CIS-2.3.1 HIGH: one sentence about this resource") {
-		t.Errorf("the failure record is not one grep-able line:\n%s", out)
+	if !strings.Contains(out, "  HIGH    CIS-2.3.1  legacy-build\n"+bodyIndent+"one sentence about this resource") {
+		t.Errorf("the failure record is not severity, control and resource on one line, reason under it:\n%s", out)
 	}
 }
 
@@ -373,9 +373,9 @@ func TestFixRidesIndentedUnderTheFinding(t *testing.T) {
 	out := render(t, FormatTable, Options{})
 	lines := strings.Split(out, "\n")
 	for i, l := range lines {
-		if strings.HasPrefix(l, "legacy-build  CIS-2.3.1") {
-			if i+1 >= len(lines) || !strings.HasPrefix(lines[i+1], "    fix: ") {
-				t.Errorf("the fix should be the indented line after the finding, got %q", lines[i+1])
+		if strings.HasSuffix(l, "CIS-2.3.1  legacy-build") {
+			if i+2 >= len(lines) || !strings.HasPrefix(lines[i+2], bodyIndent+"fix  ") {
+				t.Errorf("the fix should be the indented line after the reason, got %q", lines[i+2])
 			}
 			return
 		}
@@ -390,7 +390,7 @@ func TestEvidenceIsIndentedUnderTheFinding(t *testing.T) {
 	if err := Write(&buf, rep, Options{Format: FormatTable, Width: 100}); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(buf.String(), "    · authToken present in config.xml") {
+	if !strings.Contains(buf.String(), bodyIndent+"·    authToken present in config.xml") {
 		t.Errorf("evidence should be an indented bullet:\n%s", buf.String())
 	}
 }
@@ -413,10 +413,10 @@ func TestManualAggregatesPerControlWithCount(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := buf.String()
-	if !strings.Contains(out, "CIS-2.3.5 MANUAL (2 jobs): ") {
+	if !strings.Contains(out, "MANUAL  CIS-2.3.5  2 jobs\n") {
 		t.Errorf("two same-reason MANUAL findings should fold to one counted line:\n%s", out)
 	}
-	if strings.Count(out, "CIS-2.3.5 MANUAL") != 1 {
+	if strings.Count(out, "MANUAL  CIS-2.3.5") != 1 {
 		t.Errorf("the group should render exactly once:\n%s", out)
 	}
 }
@@ -438,7 +438,7 @@ func TestManualGroupSplitsOnDifferentDetails(t *testing.T) {
 	if err := Write(&buf, rep, Options{Format: FormatTable, Width: 100}); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Count(buf.String(), "CIS-2.3.5 MANUAL") != 2 {
+	if strings.Count(buf.String(), "MANUAL  CIS-2.3.5") != 2 {
 		t.Errorf("different reasons should keep their own lines:\n%s", buf.String())
 	}
 }
@@ -843,8 +843,8 @@ func TestTableSetsAcceptedFindingsApart(t *testing.T) {
 	}
 	out := buf.String()
 	for _, want := range []string{
-		"Accepted by exceptions (1)",
-		"legacy-build  CIS-2.3.1 FAIL: accepted until 2027-03-31: vendor job",
+		"Accepted by exceptions ─",
+		"  FAIL    CIS-2.3.1  legacy-build\n" + bodyIndent + "accepted until 2027-03-31: vendor job",
 		"1 failed finding accepted by exceptions",
 		"Exceptions",
 		"lapsed on 2026-01-01",
@@ -853,7 +853,7 @@ func TestTableSetsAcceptedFindingsApart(t *testing.T) {
 			t.Errorf("table is missing %q:\n%s", want, out)
 		}
 	}
-	if strings.Contains(out, "legacy-build  CIS-2.3.1 HIGH") {
+	if strings.Contains(out, "HIGH    CIS-2.3.1  legacy-build") {
 		t.Errorf("an accepted finding was listed among the failures:\n%s", out)
 	}
 

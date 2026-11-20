@@ -15,16 +15,9 @@ import (
 //
 // A failure is read in one place — which resource, which control, why, and the
 // fix — instead of being split across a summary matrix, an aggregate table and
-// a remediation section three screens apart. Column 0 is the record delimiter:
-// a finding starts flush-left and every continuation is indented, so the eye
-// and grep both parse it.
-
-// contIndent is the continuation indent for wrapped record text.
-const contIndent = "    "
-
-// minFlowWidth is the narrowest column Details will share a line with its
-// prefix; below it the text starts on its own line instead of squeezing.
-const minFlowWidth = 20
+// a remediation section three screens apart. The label column is the record
+// delimiter: a finding starts with its severity two columns in, and everything
+// that belongs to it is indented past that, so the eye and grep both parse it.
 
 // writeFindingLines renders the findings: FAIL records, PASS records (with
 // ShowPassed), aggregated MANUAL groups, aggregated N/A groups (with
@@ -60,34 +53,39 @@ func writeFindingLines(w io.Writer, rep *engine.Report, p painter, width int, op
 	}
 
 	if len(fails) > 0 {
-		blank(w)
+		meta := console.Pluralize(len(fails), "finding")
+		if n := failedControls(fails); n != len(fails) {
+			meta += " in " + console.Pluralize(n, "control")
+		}
+		heading(w, p, width, ansiRed, "Failed", meta)
 		for _, f := range controllerFirst(fails) {
+			blank(w)
 			writeFindingLine(w, p, width, f, opts)
 		}
 	}
 	if len(passes) > 0 {
-		blank(w)
+		heading(w, p, width, ansiGreen, "Passed", console.Pluralize(len(passes), "finding"))
 		for _, f := range controllerFirst(passes) {
+			blank(w)
 			writeFindingLine(w, p, width, f, opts)
 		}
 	}
 	if len(manuals) > 0 {
-		blank(w)
+		heading(w, p, width, ansiYellow, "Manual review", console.Pluralize(len(manuals), "control"))
 		writeGroupLines(w, p, width, statusManual, manuals, opts)
 	}
 	if len(nas) > 0 {
-		blank(w)
+		heading(w, p, width, "", "Not applicable", console.Pluralize(len(nas), "control"))
 		writeGroupLines(w, p, width, statusNA, nas, opts)
 	}
 	// Accepted findings last among the findings: still listed, so an exception
 	// never makes a problem invisible, but below everything that fails the run.
 	if len(accepted) > 0 {
-		blank(w)
-		line(w, "%s", p.paint(ansiBold, fmt.Sprintf("Accepted by exceptions (%d)", len(accepted))))
+		heading(w, p, width, "", "Accepted by exceptions", fmt.Sprintf("%d", len(accepted)))
 		for _, f := range controllerFirst(accepted) {
-			head := fmt.Sprintf("%s  %s %s: ", p.paint(ansiBold, f.Resource), p.paint(ansiCyan, f.CheckID), p.paint(ansiDim, string(f.Status)))
-			headWidth := len(f.Resource) + 2 + len(f.CheckID) + 1 + len(f.Status) + 2
-			flowLine(w, width, head, headWidth, acceptedNote(f.Waiver))
+			blank(w)
+			record(w, p, width, string(f.Status), func(s string) string { return p.paint(ansiDim, s) }, f.CheckID, f.Resource)
+			recordText(w, p, width, "", acceptedNote(f.Waiver))
 		}
 	}
 
@@ -100,73 +98,38 @@ func writeFindingLines(w io.Writer, rep *engine.Report, p painter, width int, op
 			// say where the explanation is or it is a dead end.
 			unreadSentence += "; rerun with --details=" + strings.Join(unreadIDs, ",") + " for why."
 		}
+		heading(w, p, width, ansiYellow, "Unread", console.Pluralize(len(unreadIDs), "control"))
 		blank(w)
-		for _, l := range console.Wrap(unreadSentence, width) {
-			line(w, "%s", p.paint(ansiYellow, l))
-		}
+		indented(w, p, width, ansiYellow, unreadSentence)
 	}
 }
 
 // writeFindingLine renders one record:
 //
-//	<resource>  <CHECK-ID> <SEVERITY>: <details>
-//	    fix: <one-line remediation>
-//	    · <evidence>
+//	HIGH    CIS-2.1.2  platform/nightly-deploy
+//	        <details>
+//	        fix  <one-line remediation>
+//	        ·    <evidence>
+//
+// The label column is the severity for a failure and the state for anything
+// else, so the column says, top to bottom, how much each record matters.
 func writeFindingLine(w io.Writer, p painter, width int, f engine.Finding, opts Options) {
 	sev := strings.ToUpper(f.Severity)
 	label, labelColour := sev, severityColour(p)
 	if f.Status == engine.StatusPass {
 		label, labelColour = statusPass, statusColour(p)
 	}
-	head := fmt.Sprintf("%s  %s %s: ",
-		p.paint(ansiBold, f.Resource),
-		p.paint(ansiCyan, f.CheckID),
-		labelColour(label))
-	headWidth := len(f.Resource) + 2 + len(f.CheckID) + 1 + len(label) + 2
-	flowLine(w, width, head, headWidth, f.Details)
+	record(w, p, width, label, labelColour, f.CheckID, f.Resource)
+	recordText(w, p, width, "", f.Details)
 
 	if f.Status != engine.StatusFail {
 		return
 	}
 	if !opts.NoRemediations {
-		fixHead := contIndent + p.paint(ansiBold, "fix:") + " "
-		flowLine(w, width, fixHead, len(contIndent)+5, fixLine(f))
+		recordKey(w, p, width, "fix", ansiBold, fixLine(f), "")
 	}
 	for _, e := range f.Evidence {
-		for i, l := range console.Wrap(e, width-len(contIndent)-2) {
-			if i == 0 {
-				line(w, "%s%s", contIndent, p.paint(ansiDim, "· "+l))
-				continue
-			}
-			line(w, "%s  %s", contIndent, p.paint(ansiDim, l))
-		}
-	}
-}
-
-// flowLine writes head followed by text, wrapping the text and indenting every
-// continuation by contIndent. head is already painted; headWidth is its width
-// without paint. When the head leaves too little room, the text starts on the
-// next line instead of squeezing into a sliver — the head may then overflow the
-// width on its own, the same unbreakable-token policy the header applies to a
-// long base URL.
-func flowLine(w io.Writer, width int, head string, headWidth int, text string) {
-	if width-headWidth < minFlowWidth {
-		line(w, "%s", strings.TrimRight(head, " "))
-		for _, l := range console.Wrap(text, width-len(contIndent)) {
-			line(w, "%s%s", contIndent, l)
-		}
-		return
-	}
-	// Two widths, not one: the first line shares the row with the head, the
-	// continuations get almost the whole terminal back. Wrapping everything at
-	// the first line's width squeezed every continuation into the head-sized
-	// column it no longer shares the row with.
-	first := console.Wrap(text, width-headWidth)
-	line(w, "%s%s", head, first[0])
-	if rest := strings.Join(first[1:], " "); rest != "" {
-		for _, l := range console.Wrap(rest, width-len(contIndent)) {
-			line(w, "%s%s", contIndent, l)
-		}
+		recordKey(w, p, width, "·", ansiDim, e, ansiDim)
 	}
 }
 
@@ -244,24 +207,20 @@ func (g findingGroup) countLabel() string {
 
 // writeGroupLines renders aggregated records:
 //
-//	<CHECK-ID> <STATUS> (<count>): <details>
-//	    fix: <one-line remediation>
+//	MANUAL  CIS-2.1.1  5 jobs
+//	        <details>
+//	        fix  <one-line remediation>
 //
 // One question needing a person is one question however many resources it
 // spans; the per-resource split is a --details away.
 func writeGroupLines(w io.Writer, p painter, width int, status string, groups []findingGroup, opts Options) {
 	for _, g := range groups {
-		count := g.countLabel()
-		head := fmt.Sprintf("%s %s (%s): ",
-			p.paint(ansiCyan, g.rep.CheckID),
-			statusColour(p)(status),
-			count)
-		headWidth := len(g.rep.CheckID) + 1 + len(status) + 2 + len(count) + 3
-		flowLine(w, width, head, headWidth, g.details)
+		blank(w)
+		record(w, p, width, status, statusColour(p), g.rep.CheckID, g.countLabel())
+		recordText(w, p, width, "", g.details)
 
 		if status == statusManual && !opts.NoRemediations {
-			fixHead := contIndent + p.paint(ansiBold, "fix:") + " "
-			flowLine(w, width, fixHead, len(contIndent)+5, fixLine(g.rep))
+			recordKey(w, p, width, "fix", ansiBold, fixLine(g.rep), "")
 		}
 	}
 }
@@ -333,9 +292,7 @@ func writeHint(w io.Writer, p painter, width int) {
 	blank(w)
 	text := "Details: rerun with --details for per-resource findings and full remediation steps, " +
 		"or --details=<resource|control>[,...] to filter; -o json for the full report."
-	for _, l := range console.Wrap(text, width) {
-		line(w, "%s", p.paint(ansiDim, l))
-	}
+	indented(w, p, width, ansiDim, text)
 }
 
 // detailFilter is the parsed form of --details: which controls and which

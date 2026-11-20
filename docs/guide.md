@@ -243,8 +243,9 @@ Floored, never rounded, so a failing finding can never print `100`. The
 arithmetic is printed so the number is checkable:
 
 ```
-SCORE 58/100   12 passed  7 failed  17 manual  4 n/a
-      weighted 28/48 (HIGH=3, MEDIUM=2, LOW=1; manual and n/a excluded)
+  SCORE 58/100  ██████████████░░░░░░░░░░░
+        12 passed · 7 failed · 17 manual · 4 n/a
+        weighted 28/48 (HIGH=3, MEDIUM=2, LOW=1; manual and n/a excluded)
 ```
 
 When nothing was decidable the score is `0`, not `100` — an empty numerator
