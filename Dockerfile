@@ -18,9 +18,9 @@ ARG DATE=unknown
 # CGO is off so the result runs on a scratch-like base with no libc.
 RUN CGO_ENABLED=0 go build -trimpath \
     -ldflags "-s -w \
-      -X github.com/scm-bench/jenkins-bench/internal/cli.Version=${VERSION} \
-      -X github.com/scm-bench/jenkins-bench/internal/cli.Commit=${COMMIT} \
-      -X github.com/scm-bench/jenkins-bench/internal/cli.Date=${DATE}" \
+      -X github.com/keelinfra/jenkins-bench/internal/cli.Version=${VERSION} \
+      -X github.com/keelinfra/jenkins-bench/internal/cli.Commit=${COMMIT} \
+      -X github.com/keelinfra/jenkins-bench/internal/cli.Date=${DATE}" \
     -o /out/jenkins-bench ./cmd/jenkins-bench
 
 FROM alpine:3.24

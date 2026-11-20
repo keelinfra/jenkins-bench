@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // writeJSON emits the report as it stands.

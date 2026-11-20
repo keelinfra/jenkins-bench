@@ -16,9 +16,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
-	"github.com/scm-bench/jenkins-bench/internal/ci"
-	"github.com/scm-bench/jenkins-bench/internal/config"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/config"
 )
 
 // Status is the outcome of one control against one resource.

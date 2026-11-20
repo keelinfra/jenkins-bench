@@ -6,7 +6,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
 )
 
 // xmlFrame is one open element while findScripts walks a document.

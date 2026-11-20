@@ -10,9 +10,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
-	"github.com/scm-bench/jenkins-bench/internal/console"
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/console"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // SARIF 2.1.0. Findings here are configuration facts about a controller rather
@@ -20,7 +20,7 @@ import (
 // logicalLocation — and also carries a physicalLocation, because GitHub code
 // scanning drops any result without one: the upload reports success and the
 // Security tab stays empty, which a pipeline reads as nothing to fix
-// (scm-bench/jenkins-bench#10). The artifact URI is a stable path naming the
+// (keelinfra/jenkins-bench#10). The artifact URI is a stable path naming the
 // controller and the resource; it need not exist in the repository the SARIF
 // is uploaded to, as OpenSSF Scorecard's do not.
 
@@ -31,7 +31,7 @@ const (
 	// cosmetic: a validating consumer fetches it, and every report we emit
 	// carries the URL.
 	sarifSchema   = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json"
-	sarifInfoURI  = "https://github.com/scm-bench/jenkins-bench"
+	sarifInfoURI  = "https://github.com/keelinfra/jenkins-bench"
 	sarifToolName = "jenkins-bench"
 
 	// maxSARIFResults is GitHub's cap on what it keeps from one run: past

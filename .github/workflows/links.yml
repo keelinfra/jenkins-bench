@@ -1,6 +1,6 @@
-# The check itself lives in scm-bench/.github, shared by every bench. This file
-# owns the trigger: a weekly schedule because links rot with no commit to hang
-# a failure on, plus pull requests that touch the files carrying URLs.
+# The links a control hands to users rot silently as vendors reorganise their
+# docs. Weekly, because links rot with no commit to hang a failure on, plus
+# pull requests that touch the files carrying URLs.
 name: Links
 
 on:
@@ -23,5 +23,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  links:
-    uses: scm-bench/.github/.github/workflows/go-bench-links.yml@main
+  check:
+    name: Reference URLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Collect the URLs the tool hands to users
+        run: |
+          # Tests excluded: their URLs are fixtures, not references.
+          grep -rhoE 'https://[^"[:space:]]+' \
+            --exclude='*_test.go' --exclude='*_test.rego' \
+            internal/checks/policies internal/report \
+            | sed 's/[.,)]*$//' \
+            | grep -vE 'example\.(com|invalid)' \
+            | sort -u > urls.txt
+          echo "Found $(wc -l < urls.txt) distinct URLs:"
+          cat urls.txt
+
+      - name: Check each one resolves
+        run: |
+          # 404/410/5xx fail: the page is gone. 403/429 warn: a host declining
+          # a CI runner says nothing about whether the page exists.
+          broken=0
+          unverified=0
+
+          while read -r url; do
+            code=$(curl -sSL -o /dev/null -w '%{http_code}' \
+                     --retry 3 --retry-delay 2 --retry-all-errors \
+                     --max-time 30 \
+                     -A "jenkins-bench-link-check (+https://github.com/$GITHUB_REPOSITORY)" \
+                     "$url" || echo 000)
+
+            case "$code" in
+              2*|3*)
+                echo "ok      $code  $url"
+                ;;
+              404|410)
+                echo "::error title=Dead reference::$url returned $code"
+                broken=$((broken + 1))
+                ;;
+              403|429|000)
+                echo "::warning title=Could not verify::$url returned $code — the host declined the request, which is not evidence the page is gone. Open it by hand."
+                unverified=$((unverified + 1))
+                ;;
+              *)
+                echo "::error title=Unexpected status::$url returned $code"
+                broken=$((broken + 1))
+                ;;
+            esac
+          done < urls.txt
+
+          echo
+          echo "$broken dead, $unverified unverified, out of $(wc -l < urls.txt)"
+          if [ "$broken" -gt 0 ]; then
+            echo "A reference a user would click is gone. Fix the URL, do not delete the reference."
+            exit 1
+          fi

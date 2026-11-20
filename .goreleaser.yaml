@@ -18,9 +18,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/scm-bench/jenkins-bench/internal/cli.Version={{ .Version }}
-      - -X github.com/scm-bench/jenkins-bench/internal/cli.Commit={{ .FullCommit }}
-      - -X github.com/scm-bench/jenkins-bench/internal/cli.Date={{ .Date }}
+      - -X github.com/keelinfra/jenkins-bench/internal/cli.Version={{ .Version }}
+      - -X github.com/keelinfra/jenkins-bench/internal/cli.Commit={{ .FullCommit }}
+      - -X github.com/keelinfra/jenkins-bench/internal/cli.Date={{ .Date }}
 
 archives:
   - id: jenkins-bench
@@ -34,6 +34,7 @@ archives:
     files:
       - LICENSE
       - README.md
+      - docs/guide.md
       # "examples/*", not "examples/**/*": the ** form requires at least one
       # subdirectory, so it silently matched nothing and shipped archives
       # without the sample config and snapshot the README tells people to run.
@@ -90,7 +91,7 @@ signs:
       - "${artifact}"
       - "--yes"
 
-# The manifest is what `docker pull ghcr.io/scm-bench/jenkins-bench:0.1.0` resolves
+# The manifest is what `docker pull ghcr.io/keelinfra/jenkins-bench:0.1.0` resolves
 # to, so that is what carries the signature. A release candidate leaves the
 # :latest manifest unpushed (skip_push: auto), and goreleaser only signs
 # artifacts it actually published.
@@ -136,7 +137,7 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     use: buildx
     image_templates:
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-amd64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
@@ -154,7 +155,7 @@ dockers:
     dockerfile: Dockerfile.goreleaser
     use: buildx
     image_templates:
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-arm64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-arm64"
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
@@ -169,15 +170,15 @@ docker_manifests:
   # Both manifests point at the same per-architecture images; a manifest does
   # not need its own set of tags, so there are no separate latest-amd64 /
   # latest-arm64 images to keep in step.
-  - name_template: "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}"
+  - name_template: "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}"
     image_templates:
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-amd64"
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-arm64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-amd64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-arm64"
 
-  - name_template: "ghcr.io/scm-bench/jenkins-bench:latest"
+  - name_template: "ghcr.io/keelinfra/jenkins-bench:latest"
     image_templates:
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-amd64"
-      - "ghcr.io/scm-bench/jenkins-bench:{{ .Version }}-arm64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-amd64"
+      - "ghcr.io/keelinfra/jenkins-bench:{{ .Version }}-arm64"
     # "auto" skips this manifest when the tag carries a prerelease part, so a
     # release candidate never becomes what `docker pull` returns by default.
     # Go's @latest already excludes prereleases; Docker has no such notion, so
@@ -204,8 +205,8 @@ release:
     of the CIS Software Supply Chain Security Guide.
 
     ```bash
-    go install github.com/scm-bench/jenkins-bench/cmd/jenkins-bench@{{ .Tag }}
-    docker pull ghcr.io/scm-bench/jenkins-bench:{{ .Version }}
+    go install github.com/keelinfra/jenkins-bench/cmd/jenkins-bench@{{ .Tag }}
+    docker pull ghcr.io/keelinfra/jenkins-bench:{{ .Version }}
     ```
   footer: |
     ## Verifying
@@ -218,24 +219,23 @@ release:
 
     # 2. the checksum file came from this repository's release workflow
     cosign verify-blob checksums.txt --bundle checksums.txt.bundle \
-      --certificate-identity-regexp '^https://github\.com/scm-bench/\.github/\.github/workflows/go-bench-release\.yml@' \
+      --certificate-identity-regexp '^https://github\.com/keelinfra/jenkins-bench/\.github/workflows/release\.yml@' \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-      --certificate-github-workflow-repository scm-bench/jenkins-bench
+      --certificate-github-workflow-repository keelinfra/jenkins-bench
 
     # 3. the container image, same signing identity
-    cosign verify ghcr.io/scm-bench/jenkins-bench:{{ .Version }} \
-      --certificate-identity-regexp '^https://github\.com/scm-bench/\.github/\.github/workflows/go-bench-release\.yml@' \
+    cosign verify ghcr.io/keelinfra/jenkins-bench:{{ .Version }} \
+      --certificate-identity-regexp '^https://github\.com/keelinfra/jenkins-bench/\.github/workflows/release\.yml@' \
       --certificate-oidc-issuer https://token.actions.githubusercontent.com \
-      --certificate-github-workflow-repository scm-bench/jenkins-bench
+      --certificate-github-workflow-repository keelinfra/jenkins-bench
 
     # 4. what commit and workflow built an archive
     gh attestation verify jenkins-bench_{{ .Version }}_linux_amd64.tar.gz \
-      --repo scm-bench/jenkins-bench --signer-repo scm-bench/.github
+      --repo keelinfra/jenkins-bench
     ```
 
-    The signing identity is scm-bench/.github's shared release workflow, not this
-    repository's — the job runs inside the reusable workflow, so that is what the
-    OIDC token names. `--certificate-github-workflow-repository` and `--signer-repo`
-    are what tie the signature back to this repository; without them cosign
-    confirms only that *somebody* signed the file. Each archive also ships an SPDX
-    SBOM (`*.sbom.json`), covered by the same checksum file.
+    The signing identity is this repository's own release workflow, so a
+    signature made anywhere else does not verify. Releases up to v0.2.0 were
+    built in the scm-bench organization and are signed by
+    `scm-bench/.github`'s shared release workflow instead. Each archive also
+    ships an SPDX SBOM (`*.sbom.json`), covered by the same checksum file.

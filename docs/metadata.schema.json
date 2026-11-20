@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/keelinfra/jenkins-bench/main/docs/metadata.schema.json",
+  "title": "jenkins-bench control metadata",
+  "description": "One metadata.json per control directory. The single source of truth for what a report says about a finding, including the remediation text.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "package",
+    "scope",
+    "severity",
+    "platforms",
+    "title",
+    "remediation",
+    "fixSummary"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The check identifier used on the command line, e.g. \"CIS-1.1.3\". Unique across the bundle.",
+      "examples": ["CIS-1.1.3"]
+    },
+    "cisId": {
+      "type": "string",
+      "description": "The bare benchmark number, e.g. \"1.1.3\". Sorted numerically per dotted component, so 1.1.9 precedes 1.1.11.",
+      "pattern": "^[0-9]+(\\.[0-9]+)*$",
+      "examples": ["1.1.3"]
+    },
+    "package": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The Rego package that decides this control.",
+      "examples": ["scmbench.rules.cis_1_1_3"]
+    },
+    "scope": {
+      "type": "string",
+      "minLength": 1,
+      "description": "What the control is evaluated against. The legal values belong to the bench's domain schema rather than here: the SCM domain uses \"repository\" and \"organization\", the Jenkins domain uses \"controller\" and \"job\". Each bench validates its own set when it loads the bundle, so enumerating every domain's vocabulary in the generic layer would only mean editing this file for each new domain that arrives.",
+      "examples": ["repository", "organization", "controller", "job"]
+    },
+    "severity": {
+      "type": "string",
+      "description": "Weighs the control in the score: HIGH=3, MEDIUM=2, LOW=1.",
+      "enum": ["HIGH", "MEDIUM", "LOW"]
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Platform identifiers this control applies to, matching snapshot metadata.platform.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "examples": [["jenkins"]]
+    },
+    "automated": {
+      "type": "boolean",
+      "default": false,
+      "description": "False for controls no API can answer. Those always report MANUAL and never affect the score, and they are carried so the benchmark mapping is complete rather than quietly partial."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The control's name, as the report prints it."
+    },
+    "description": {
+      "type": "string",
+      "description": "What the control is for."
+    },
+    "remediation": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The full paragraph: the settings path, the higher-scope variant that covers many resources at once, the exemptions worth granting, and the config key that changes what the control counts. Must name a concrete place to act."
+    },
+    "fixSummary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "^[^\\n]+$",
+      "description": "Remediation's first move in one imperative line, under 100 characters and on one line. Printed inside a table cell under the verdict, so it has to stand alone. Must name a concrete place to act.",
+      "examples": [
+        "Enable \"Prevent deletion\" at Repository settings -> Branch permissions."
+      ]
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Links backing the control."
+    }
+  }
+}

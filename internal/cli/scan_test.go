@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // hardenedJob is one pipeline read from a Jenkinsfile in SCM — the shape every

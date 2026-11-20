@@ -1,6 +1,6 @@
 // Package ci defines the normalized snapshot that fetchers produce and Rego
-// policies consume. Shape:
-// https://github.com/scm-bench/scm-bench/blob/main/docs/jenkins-snapshot.md
+// policies consume. The types below are the shape; SchemaVersion records
+// every change to it.
 //
 // No field in this package holds a secret — snapshots are written to disk and
 // passed around. Presence is a bool, a value is never carried;

@@ -3,13 +3,13 @@
 ## Reporting a vulnerability
 
 Report privately through
-[GitHub Security Advisories](https://github.com/scm-bench/jenkins-bench/security/advisories/new).
+[GitHub Security Advisories](https://github.com/keelinfra/jenkins-bench/security/advisories/new).
 That keeps the report confidential until a fix is available and gives us a
 private space to work with you on it.
 
 Please do not open a public issue for a security problem.
 
-If you cannot use GitHub advisories, email **xianpeng.shen@gmail.com** with
+If you cannot use GitHub advisories, email **hello@keelinfra.io** with
 `jenkins-bench security` in the subject.
 
 **What to expect**

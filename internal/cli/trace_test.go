@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci/jenkins"
+	"github.com/keelinfra/jenkins-bench/internal/ci/jenkins"
 )
 
 func sent(method, path string, status int) jenkins.RequestEvent {

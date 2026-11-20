@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/scm-bench/jenkins-bench/internal/ci"
-	"github.com/scm-bench/jenkins-bench/internal/config"
+	"github.com/keelinfra/jenkins-bench/internal/ci"
+	"github.com/keelinfra/jenkins-bench/internal/config"
 )
 
 // examplePath resolves a file under examples/ from this package's directory.

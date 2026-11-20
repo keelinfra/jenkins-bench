@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/scm-bench/jenkins-bench/internal/checks"
-	"github.com/scm-bench/jenkins-bench/internal/config"
-	"github.com/scm-bench/jenkins-bench/internal/engine"
+	"github.com/keelinfra/jenkins-bench/internal/checks"
+	"github.com/keelinfra/jenkins-bench/internal/config"
+	"github.com/keelinfra/jenkins-bench/internal/engine"
 )
 
 // brokenWriter refuses every write, like stdout closed under the process.
