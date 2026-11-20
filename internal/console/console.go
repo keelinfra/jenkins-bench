@@ -37,6 +37,29 @@ const (
 	Cyan   = "\033[36m"
 )
 
+// The brand pair: navy text on an amber ground, the keelinfra colours.
+//
+// Everything else the tool paints uses the terminal's own sixteen colours,
+// which the reader's theme has already made legible on whatever background it
+// has. These two are the exception, and they are only ever used together as a
+// badge, so the pair carries its own contrast on a light window and a dark one
+// alike. A terminal that says it can draw 24-bit colour gets the exact brand
+// values; anything else gets the nearest of the 256-colour cube, which every
+// terminal still in use understands.
+const (
+	brandTrue = "\033[1;38;2;11;34;57;48;2;232;163;61m"
+	brand256  = "\033[1;38;5;234;48;5;179m"
+)
+
+// Brand returns the escape for the brand badge on this terminal.
+func Brand() string {
+	switch strings.ToLower(os.Getenv("COLORTERM")) {
+	case "truecolor", "24bit":
+		return brandTrue
+	}
+	return brand256
+}
+
 // Painter applies colour, or does not.
 type Painter struct{ Enabled bool }
 

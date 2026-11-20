@@ -44,7 +44,7 @@ func TestTableOnAnAbsurdlyNarrowTerminal(t *testing.T) {
 	} {
 		var buf bytes.Buffer
 		RenderTable(&buf, 4, cols, [][]string{{"PLAT/a-long-name", "repository"}})
-		if !strings.Contains(buf.String(), "┌") {
+		if !strings.Contains(buf.String(), "╭") {
 			t.Fatalf("no table drawn:\n%s", buf.String())
 		}
 		widths := columnWidths(4, cols, [][]string{{"PLAT/a-long-name", "repository"}})

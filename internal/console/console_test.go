@@ -220,7 +220,7 @@ func TestTableColumnsLineUpOnEveryRow(t *testing.T) {
 	for _, line := range strings.Split(strings.TrimSuffix(buf.String(), "\n"), "\n") {
 		var at []int
 		for i, r := range []rune(stripEscapes(line)) {
-			if strings.ContainsRune("│┌┬┐├┼┤└┴┘", r) {
+			if strings.ContainsRune("│╭┬╮├┼┤╰┴╯", r) {
 				at = append(at, i)
 			}
 		}

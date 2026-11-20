@@ -19,10 +19,18 @@ Set FontSize 14
 Set Width 1000
 Set Height 600
 Set Padding 24
-Set Theme "Catppuccin Mocha"
+# keelinfra's own palette: a navy ground, amber for the attention colour, the
+# same values as the README art and keelinfra.io. COLORTERM below lets the
+# brand badge use the exact amber instead of its 256-colour stand-in.
+Set Theme { "name": "keelinfra", "background": "#0c141d", "foreground": "#dfe7ee", "cursor": "#e8a33d", "selection": "#24425f", "black": "#0b2239", "red": "#e0566a", "green": "#4cc38a", "yellow": "#e8a33d", "blue": "#6f9fd8", "purple": "#c38fd6", "cyan": "#8fb8d4", "white": "#c3d0dc", "brightBlack": "#5b6e82", "brightRed": "#f0788a", "brightGreen": "#7ad8a8", "brightYellow": "#f3c46d", "brightBlue": "#8fb6e6", "brightPurple": "#d3a8e3", "brightCyan": "#acd0e6", "brightWhite": "#ffffff" }
+Set Margin 20
+Set MarginFill "#0b2239"
+Set BorderRadius 10
 Set TypingSpeed 60ms
 Set Framerate 10
 Set WindowBar Colorful
+
+Env COLORTERM "truecolor"
 
 Set WaitTimeout 180s
 Set WaitPattern /^\$ *$/

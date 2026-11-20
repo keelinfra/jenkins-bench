@@ -121,18 +121,20 @@ func prose(w io.Writer, width int, prefix string, prefixWidth int, text string) 
 func writeHeader(w io.Writer, rep *engine.Report, p painter, width int) {
 	m := rep.Metadata
 	stamp := m.GeneratedAt.Format("2006-01-02 15:04:05 MST")
-	name := p.paint(ansiBold, "jenkins-bench")
+	name := brand(p) + " " + m.ToolVersion
+	nameWidth := brandWidth(p) + 1 + runeWidth(m.ToolVersion)
+	dot := p.paint(ansiDim, "  ·  ")
 
-	if fits(width, "jenkins-bench %s  ·  %s  ·  %s", m.ToolVersion, m.BaseURL, stamp) {
-		line(w, "%s %s  ·  %s  ·  %s", name, m.ToolVersion, m.BaseURL, stamp)
+	if nameWidth+5+runeWidth(m.BaseURL)+5+len(stamp) <= width {
+		line(w, "%s%s%s%s%s", name, dot, m.BaseURL, dot, p.paint(ansiDim, stamp))
 		return
 	}
-	if fits(width, "jenkins-bench %s  ·  %s", m.ToolVersion, m.BaseURL) {
-		line(w, "%s %s  ·  %s", name, m.ToolVersion, m.BaseURL)
+	if nameWidth+5+runeWidth(m.BaseURL) <= width {
+		line(w, "%s%s%s", name, dot, m.BaseURL)
 		line(w, "%s", p.paint(ansiDim, "scanned "+stamp))
 		return
 	}
-	line(w, "%s %s", name, m.ToolVersion)
+	line(w, "%s", name)
 	line(w, "%s", m.BaseURL)
 	line(w, "%s", p.paint(ansiDim, "scanned "+stamp))
 }
@@ -151,11 +153,6 @@ func writeNotice(w io.Writer, p painter, width int, text string) {
 	}
 }
 
-// fits reports whether the uncoloured form of a line stays inside the width.
-func fits(width int, format string, args ...any) bool {
-	return len([]rune(fmt.Sprintf(format, args...))) <= width
-}
-
 // writeSummary opens with the score and the counts behind it.
 //
 // Every line below the score states its own arithmetic, so the numbers are
@@ -171,28 +168,31 @@ func writeSummary(w io.Writer, rep *engine.Report, p painter, width int) {
 	case s.Value < 80:
 		scoreColor = ansiYellow
 	}
-	blank(w)
 
-	score := fmt.Sprintf("SCORE %d/100", s.Value)
-	counts := fmt.Sprintf("%d passed  %d failed  %d manual  %d n/a",
-		s.Passed, s.Failed, s.Manual, s.NotApplicable)
-	painted := fmt.Sprintf("%s  %s  %s  %s",
-		p.paint(ansiGreen, fmt.Sprintf("%d passed", s.Passed)),
-		p.paint(ansiRed, fmt.Sprintf("%d failed", s.Failed)),
-		p.paint(ansiYellow, fmt.Sprintf("%d manual", s.Manual)),
-		p.paint(ansiDim, fmt.Sprintf("%d n/a", s.NotApplicable)),
-	)
-	head := p.paint(ansiBold, "SCORE") + " " + p.paint(scoreColor+ansiBold, fmt.Sprintf("%d/100", s.Value))
-	// Measured on the uncoloured text: the escapes are bytes the reader never
-	// sees, and counting them would break the line onto two on a terminal wide
-	// enough for it.
-	if len(score)+3+len(counts) <= width {
-		line(w, "%s   %s", head, painted)
+	// A plain rule closes the body: the score is the verdict on everything
+	// above it, not one more section among them.
+	blank(w)
+	line(w, "%s", p.paint(ansiDim, strings.Repeat(ruleChar, width)))
+
+	// "SCORE 41/100" stays one literal run, so a pipe through grep finds it
+	// whatever else the line carries. The bar is drawn after it: 25 cells,
+	// four points a cell, or narrower when the page is.
+	score := fmt.Sprintf("%d/100", s.Value)
+	head := margin + p.paint(ansiBold, "SCORE") + " " + p.paint(scoreColor+ansiBold, score)
+	headWidth := len(margin) + len("SCORE ") + len(score)
+	if n := min(25, width-headWidth-2); n >= 10 {
+		line(w, "%s  %s", head, scoreBar(p, scoreColor, s.Value, n))
 	} else {
-		// Four counts of four digits each is 46 columns, which fits inside the
-		// narrowest width Width reports, so this never needs wrapping again.
 		line(w, "%s", head)
-		line(w, "      %s", painted)
+	}
+
+	// Measured on the uncoloured text: the escapes are bytes the reader never
+	// sees, and counting them would wrap a line that fits.
+	painted, plain := countsLine(p, s.Passed, s.Failed, s.Manual, s.NotApplicable)
+	if len(summaryIndent)+runeWidth(plain) <= width {
+		line(w, "%s%s", summaryIndent, painted)
+	} else {
+		summaryLine(w, p, width, "", plain)
 	}
 
 	// The bridge between the two countings this page uses. The line above
@@ -258,6 +258,10 @@ func writeSummary(w io.Writer, rep *engine.Report, p painter, width int) {
 	}
 }
 
+// summaryIndent puts the lines under the score in the column the number
+// starts in.
+var summaryIndent = strings.Repeat(" ", len(margin)+len("SCORE "))
+
 // failedControls counts the distinct controls with at least one failure —
 // the number the closing exit line reports, restated here so the report's
 // first numbers and its last one use the same arithmetic.
@@ -277,9 +281,8 @@ func failedControls(findings []engine.Finding) int {
 // width the reader never sees, so measuring a coloured string breaks the line
 // early on a terminal that had room for it.
 func summaryLine(w io.Writer, p painter, width int, colour, text string) {
-	const indent = 6
-	for _, l := range console.Wrap(text, width-indent) {
-		line(w, "%s%s", strings.Repeat(" ", indent), p.paint(colour, l))
+	for _, l := range console.Wrap(text, width-len(summaryIndent)) {
+		line(w, "%s%s", summaryIndent, p.paint(colour, l))
 	}
 }
 
@@ -433,24 +436,36 @@ func writeExceptionWarnings(w io.Writer, rep *engine.Report, p painter, width in
 	if len(rep.ExceptionWarnings) == 0 {
 		return
 	}
-	blank(w)
-	line(w, "%s", p.paint(ansiBold+ansiYellow, "Exceptions"))
+	heading(w, p, width, ansiYellow, "Exceptions", fmt.Sprintf("%d", len(rep.ExceptionWarnings)))
 	blank(w)
 	for _, warning := range rep.ExceptionWarnings {
-		for i, l := range console.Wrap(warning, width-4) {
-			prefix := "  - "
-			if i > 0 {
-				prefix = "    "
-			}
-			line(w, "%s%s", prefix, l)
+		bullet(w, p, width, warning, false)
+	}
+}
+
+// bullet writes one item of a warning list: a yellow "!" in the margin and
+// the text hanging beside it. With dim set, parenthesised spans are dimmed so
+// the conclusion reads before the forensics.
+func bullet(w io.Writer, p painter, width int, text string, dim bool) {
+	const lead = margin + "!  "
+	hang := strings.Repeat(" ", len(lead))
+	depth := 0
+	for i, l := range console.Wrap(text, width-len(lead)) {
+		painted := l
+		if dim {
+			painted, depth = dimParens(p, l, depth)
 		}
+		if i == 0 {
+			line(w, "%s%s  %s", margin, p.paint(ansiYellow+ansiBold, "!"), painted)
+			continue
+		}
+		line(w, "%s%s", hang, painted)
 	}
 }
 
 func writeWarnings(w io.Writer, rep *engine.Report, p painter, width int, withFix bool) {
 	if len(rep.Metadata.Warnings) > 0 {
-		blank(w)
-		line(w, "%s", p.paint(ansiBold+ansiYellow, "Scan warnings"))
+		heading(w, p, width, ansiYellow, "Scan warnings", fmt.Sprintf("%d", len(rep.Metadata.Warnings)))
 		blank(w)
 		// One bullet per warning, with the parenthesised cause — the API path
 		// and status a warning carries in brackets — dimmed, so the conclusion
@@ -468,16 +483,7 @@ func writeWarnings(w io.Writer, rep *engine.Report, p painter, width int, withFi
 				strings.Contains(warning, "not readable") {
 				unreadable = true
 			}
-			depth := 0
-			for i, l := range console.Wrap(warning, width-4) {
-				prefix := "  - "
-				if i > 0 {
-					prefix = "    "
-				}
-				var painted string
-				painted, depth = dimParens(p, l, depth)
-				line(w, "%s%s", prefix, painted)
-			}
+			bullet(w, p, width, warning, true)
 		}
 		// The failed controls all carry a fix; the scan's own blind spot is a
 		// finding about the token and deserves one too. Without this line the
@@ -485,16 +491,15 @@ func writeWarnings(w io.Writer, rep *engine.Report, p painter, width int, withFi
 		// problem it never says how to solve.
 		if unreadable && withFix {
 			blank(w)
-			prose(w, width, "  fix: ", 7,
+			prose(w, width, margin+p.paint(ansiBold, "fix")+"  ", len(margin)+5,
 				"rerun with a token that has administrator read access, so the scan can evaluate what it could not see.")
 		}
 	}
 	if len(rep.Errors) > 0 {
-		blank(w)
-		line(w, "%s", p.paint(ansiBold+ansiRed, "Policy errors"))
+		heading(w, p, width, ansiRed, "Policy errors", fmt.Sprintf("%d", len(rep.Errors)))
 		blank(w)
 		for _, e := range rep.Errors {
-			prose(w, width, "  ", 2, e)
+			prose(w, width, margin, len(margin), e)
 		}
 	}
 }
@@ -591,8 +596,11 @@ func selectForSection(findings []engine.Finding, showPassed bool) []engine.Findi
 }
 
 func writeResourceSection(w io.Writer, p painter, width int, t resourceTally, findings []engine.Finding) {
-	blank(w)
-	line(w, "%s %s", p.paint(ansiBold, t.name), p.paint(ansiDim, "("+t.kind+")"))
+	kind := t.kind
+	if strings.EqualFold(kind, t.name) {
+		kind = "" // the controller is its own kind; saying so twice is noise
+	}
+	heading(w, p, width, "", t.name, kind)
 	blank(w)
 
 	// Severities ascending, as trivy writes them: the reader scans right to the
@@ -607,7 +615,8 @@ func writeResourceSection(w io.Writer, p painter, width int, t resourceTally, fi
 		}
 		parts = append(parts, fmt.Sprintf("%s: %d", sev, n))
 	}
-	line(w, "Total: %d (%s)", len(findings), strings.Join(parts, ", "))
+	line(w, "%s%s %s", margin, p.paint(ansiBold, fmt.Sprintf("Total: %d", len(findings))),
+		p.paint(ansiDim, "("+strings.Join(parts, ", ")+")"))
 	blank(w)
 
 	cols := []console.Column{
@@ -629,7 +638,10 @@ func writeResourceSection(w io.Writer, p painter, width int, t resourceTally, fi
 			findingCell(f),
 		})
 	}
-	console.RenderTable(w, width, cols, rows)
+	console.RenderStyledTable(w, width, cols, rows, console.TableStyle{
+		Border: func(s string) string { return p.paint(ansiDim, s) },
+		Header: func(s string) string { return p.paint(ansiBold, s) },
+	})
 }
 
 // findingCell is what this resource did, what the scan saw when it looked, and
@@ -683,8 +695,8 @@ func writeRemediations(w io.Writer, findings []engine.Finding, p painter, width 
 		id := f.CheckID + strings.Repeat(" ", idWidth-len(f.CheckID))
 		prose(w, width, "  "+p.paint(ansiCyan+ansiBold, id)+"  ", idWidth+4, f.Remediation)
 	}
-	writeRemediationSection(w, p, "Remediations", fails, full)
-	writeRemediationSection(w, p, "Manual review", manuals, full)
+	writeRemediationSection(w, p, width, "Remediations", fails, full)
+	writeRemediationSection(w, p, width, "Manual review", manuals, full)
 }
 
 // writeRulesIndex is the default layout's closing reference: one line per
@@ -720,8 +732,7 @@ func writeRulesIndex(w io.Writer, rep *engine.Report, p painter, width int) {
 		return
 	}
 
-	blank(w)
-	line(w, "%s", p.paint(ansiBold, "Rules"))
+	heading(w, p, width, "", "Rules", console.Pluralize(len(entries), "link"))
 	blank(w)
 	for _, e := range entries {
 		pad := strings.Repeat(" ", idWidth-len(e.id))
@@ -738,12 +749,15 @@ func writeRulesIndex(w io.Writer, rep *engine.Report, p painter, width int) {
 	}
 }
 
-func writeRemediationSection(w io.Writer, p painter, heading string, entries []engine.Finding, entry func(engine.Finding)) {
+func writeRemediationSection(w io.Writer, p painter, width int, title string, entries []engine.Finding, entry func(engine.Finding)) {
 	if len(entries) == 0 {
 		return
 	}
-	blank(w)
-	line(w, "%s", p.paint(ansiBold, fmt.Sprintf("%s (%d)", heading, len(entries))))
+	colour := ""
+	if title == "Manual review" {
+		colour = ansiYellow
+	}
+	heading(w, p, width, colour, title, console.Pluralize(len(entries), "control"))
 	blank(w)
 	for _, f := range entries {
 		entry(f)

@@ -32,14 +32,16 @@ type Column struct {
 	Colour func(string) string
 }
 
-// Table border characters, the same set trivy draws with.
+// Table border characters: trivy's set, with the outer corners rounded. The
+// rounded corners are in the same box-drawing block as the rest, so any font
+// that draws the grid draws them.
 const (
 	borderH  = "─"
 	borderV  = "│"
-	cornerTL = "┌"
-	cornerTR = "┐"
-	cornerBL = "└"
-	cornerBR = "┘"
+	cornerTL = "╭"
+	cornerTR = "╮"
+	cornerBL = "╰"
+	cornerBR = "╯"
 	teeT     = "┬"
 	teeB     = "┴"
 	teeL     = "├"
@@ -65,10 +67,38 @@ const minFlexWidth = 8
 // Merging saves vertical space and costs the reader a row that no longer says
 // what it belongs to; the table is dense enough without it.
 func RenderTable(w io.Writer, width int, cols []Column, rows [][]string) {
+	RenderStyledTable(w, width, cols, rows, TableStyle{})
+}
+
+// TableStyle paints the parts of a table that are not cell text. Either
+// function may be nil, which leaves that part unpainted.
+//
+// The grid is meant to recede: drawn dim, it still separates the rows, and
+// the coloured cell text — severities, states — is what the eye lands on.
+type TableStyle struct {
+	Border func(string) string
+	Header func(string) string
+}
+
+func (s TableStyle) border(text string) string {
+	if s.Border == nil {
+		return text
+	}
+	return s.Border(text)
+}
+
+// RenderStyledTable is RenderTable with the grid and headers painted.
+func RenderStyledTable(w io.Writer, width int, cols []Column, rows [][]string, style TableStyle) {
 	if len(cols) == 0 {
 		return
 	}
 	widths := columnWidths(width, cols, rows)
+	rule := func(left, mid, right string, widths []int) string {
+		return style.border(rule(left, mid, right, widths))
+	}
+	writeRow := func(w io.Writer, widths []int, cols []Column, row []string, header bool) {
+		writeStyledRow(w, widths, cols, row, header, style)
+	}
 
 	fmt.Fprintln(w, rule(cornerTL, teeT, cornerTR, widths))
 	headers := make([]string, len(cols))
@@ -231,9 +261,9 @@ func rule(left, mid, right string, widths []int) string {
 	return b.String()
 }
 
-// writeRow lays one row out over as many terminal lines as its tallest cell
+// writeStyledRow lays one row out over as many terminal lines as its tallest cell
 // needs, padding the shorter cells with blanks so the borders stay vertical.
-func writeRow(w io.Writer, widths []int, cols []Column, row []string, header bool) {
+func writeStyledRow(w io.Writer, widths []int, cols []Column, row []string, header bool, style TableStyle) {
 	cells := make([][]string, len(cols))
 	height := 1
 	for i := range cols {
@@ -249,7 +279,7 @@ func writeRow(w io.Writer, widths []int, cols []Column, row []string, header boo
 
 	for line := 0; line < height; line++ {
 		var b strings.Builder
-		b.WriteString(borderV)
+		b.WriteString(style.border(borderV))
 		for i, c := range cols {
 			text := ""
 			if line < len(cells[i]) {
@@ -260,9 +290,13 @@ func writeRow(w io.Writer, widths []int, cols []Column, row []string, header boo
 				align = AlignCentre
 			}
 			b.WriteString(" ")
-			b.WriteString(padded(text, widths[i], align, colourOf(c, header)))
+			colour := colourOf(c, header)
+			if header {
+				colour = style.Header
+			}
+			b.WriteString(padded(text, widths[i], align, colour))
 			b.WriteString(" ")
-			b.WriteString(borderV)
+			b.WriteString(style.border(borderV))
 		}
 		fmt.Fprintln(w, b.String())
 	}
